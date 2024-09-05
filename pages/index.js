@@ -32,7 +32,7 @@ export default function Home() {
       {allPosts.map((post) => (
         <Message key={post.id} {...post}>
           <Link href={{pathname: `/${post.id}`, query:{...post}}}>
-          <button>
+          <button className="active:text-gray-500 hover:text-gray-400">
                 {post.comments?.length > 0 ? post.comments?.length : 0} comments
               </button>
           </Link>

@@ -1,88 +1,66 @@
-import Message from "../components/message";
+import { auth } from "../utils/firebase";
 import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import {auth, db } from "../utils/firebase";
-import { doc, updateDoc, arrayUnion, getDoc, onSnapshot, orderBy, query, Timestamp } from "firebase/firestore";
-import { toast } from "react-toastify";
+import { useAuthState } from "react-firebase-hooks/auth";
+import {useEffect, useState} from "react";
+import { collection, query, where, onSnapshot, doc, deleteDoc} from "firebase/firestore";
+import { db } from "../utils/firebase";
+import Message from "../components/message";
+import { BsTrash2Fill } from "react-icons/bs";
+import { AiFillEdit } from "react-icons/ai";
+import Link from "next/link";
 
-export default function Details(){
-  const router = useRouter();
-  const routeData = router.query;
-  const [message, setMessage] = useState("");
-  const [allMessage, setAllMessages] = useState([]);
+export default function Dashboard() {
+  const route = useRouter();
+  const [user, loading] = useAuthState(auth);
+  const [posts, setPosts] = useState([]);
+  //see if user is logged
+  const getData = async () => {
+    if(loading) return;
+    if(!user) return route.push('/auth/login');
+    const collectionRef = collection(db, "posts");
+    const q = query(collectionRef, where("user", "==", user.uid));
+    const unsubscribe = onSnapshot(q, (snapshot => {
+      setPosts(snapshot.docs.map((doc) =>({...doc.data(), id: doc.id})))
+    }))
 
-  //submit a message
-  const submitMessage = async() => {
-    //check if user is logged
-    if(!auth.currentUser) return router.push('auth.login');
-
-    if(!message){
-      toast.error("Message empty", {
-        autoClose: 1000,
-      });
-      return;
-    }
-    const docRef = doc(db, 'posts', routeData.id);
-    await updateDoc(docRef, {
-        comments: arrayUnion({
-        message, 
-        avatar: auth.currentUser.photoURL,
-        userName: auth.currentUser.displayName,
-        time: Timestamp.now(),
-      }),
-    });
-
-    setMessage("");
-  };
-
-  //get comments
-
-  const getComments = async() => {
-    const docRef = doc(db, "posts", routeData.id);
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      setAllMessages(snapshot.data().comments);
-    });
     return unsubscribe;
   };
+  //Delete a post
+  const deletePost = async(id) => {
+    const docRef = doc(db, 'posts', id)
+    await deleteDoc(docRef);
+  }
 
+
+  //Get users Data
   useEffect(() => {
-    if(!router.isReady) return;
-    getComments();
-  }, [router.isReady]);
-  return (
+    getData();
+  }, [user, loading]);
+  return(
     <div>
-      <Message {...routeData}></Message>
-      <div className="my-4">
-        <div className="flex">
-          <input onChange={(e) => setMessage(e.target.value)} 
-          type="text" 
-          value={message} 
-          placeholder="Send a message" 
-          className="bg-gray-800 w-full p-2 text-white text-sm"
-          />
-          <button 
-          onClick={submitMessage}
-          className="bg-green-600 text-white py-2 px-4 text-sm hover:bg-green-400 active:bg-green-200"
-          >Submit
-          </button>
-        </div>
-        <div className="py-6">
-          <h2 className="font-bold">Comments</h2>
-          {allMessage?.map((message) => (
-            <div className="bg-white p-4 my-4 border-2" key={message.time}>
-              <div className="flex items-center gap-2 mb-4">
-                <img 
-                className="w-10 rounded-full"
-                src={message.avatar} 
-                alt="" 
-                />
-                <h2>{message.userName}</h2>
-              </div>
-              <h2>{message.message}</h2>
-            </div>
-          ))}
-        </div>
+      <h1>Your Posts</h1>
+      <div>
+        {posts.map(post =>{
+        return (
+        <Message {...post} key={post.id}>
+          <div className="flex gap-4">
+            <button 
+              onClick={() => deletePost(post.id)}
+              className="text-pink-600 active:text-pink-200 hover:text-pink-400 flex items-center justify-center gap-2 py-2 text-sm">
+              <BsTrash2Fill className="text-2xl"/> Delete
+            </button>
+            <Link href={{pathname: "/post", query: post}}>
+              <button className="text-green-400 active:text-green-100 hover:text-green-300 flex items-center justify-center gap-2 py-2 text-sm">
+                <AiFillEdit className="text-2xl"/>Edit
+              </button>
+            </Link>
+          </div>
+        </Message>
+        );
+      })}
+
       </div>
+      <button className="font-medium text-white bg-gray-800 hover:bg-gray-700 active:bg-gray-200 py-2 px-4 my-6" onClick ={() => auth.signOut() }>Sign Out</button>
     </div>
   );
 }

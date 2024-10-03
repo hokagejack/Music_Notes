@@ -1,60 +1,60 @@
-import Message from "../components/message";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
-import {auth, db } from "../utils/firebase";
-import { doc, updateDoc, arrayUnion, getDoc, onSnapshot, orderBy, query, Timestamp } from "firebase/firestore";
-import { toast } from "react-toastify";
+import Message from "../components/message"; //message component
+import { useRouter } from "next/router"; //router for navigation
+import { useEffect, useState } from "react"; //hooks for state and effects
+import { auth, db } from "../utils/firebase"; //firebase auth and database
+import { doc, updateDoc, arrayUnion, onSnapshot, Timestamp } from "firebase/firestore"; //firestore functions
+import { toast } from "react-toastify"; //toast for notifications
 
-export default function Details(){
-  const router = useRouter();
-  const routeData = router.query;
-  const [message, setMessage] = useState("");
-  const [allMessage, setAllMessages] = useState([]);
+export default function Details() {
+  const router = useRouter(); //initialize router
+  const routeData = router.query; //get route data
+  const [message, setMessage] = useState(""); //state for input message
+  const [allMessage, setAllMessages] = useState([]); //state for all messages
 
   //submit a message
-  const submitMessage = async() => {
-    //check if user is logged
-    if(!auth.currentUser) return router.push('auth.login');
+  const submitMessage = async () => {
+    //check if user logged in
+    if (!auth.currentUser) return router.push('auth.login'); //redirect if not logged in
 
-    if(!message){
+    if (!message) { //check if message empty
       toast.error("Message empty", {
-        autoClose: 1000,
+        autoClose: 1000, //set duration for toast
       });
-      return;
+      return; //stop execution if empty
     }
-    const docRef = doc(db, 'posts', routeData.id);
-    await updateDoc(docRef, {
-        comments: arrayUnion({
+    const docRef = doc(db, 'posts', routeData.id); 
+    await updateDoc(docRef, { //update with new comment
+      comments: arrayUnion({ //add new comment to comments array
         message, 
-        avatar: auth.currentUser.photoURL,
-        userName: auth.currentUser.displayName,
-        time: Timestamp.now(),
+        avatar: auth.currentUser.photoURL, 
+        userName: auth.currentUser.displayName, 
+        time: Timestamp.now(), 
       }),
     });
 
-    setMessage("");
+    setMessage(""); //reset message input
   };
 
   //get comments
-
-  const getComments = async() => {
+  const getComments = async () => {
     const docRef = doc(db, "posts", routeData.id);
-    const unsubscribe = onSnapshot(docRef, (snapshot) => {
-      setAllMessages(snapshot.data().comments);
+    const unsubscribe = onSnapshot(docRef, (snapshot) => { //listen for snapshot updates
+      setAllMessages(snapshot.data().comments); //set messages from snapshot
     });
-    return unsubscribe;
+    return unsubscribe; //for cleanup
   };
 
   useEffect(() => {
-    if(!router.isReady) return;
-    getComments();
-  }, [router.isReady]);
+    if (!router.isReady) return; //wait until router is ready
+    getComments(); //get comments once ready
+  }, [router.isReady]); 
+
   return (
     <div>
-      <Message {...routeData}></Message>
+      <Message {...routeData}></Message> {/* render message component */}
       <div className="my-4">
         <div className="flex">
-          <input onChange={(e) => setMessage(e.target.value)} 
+          <input onChange={(e) => setMessage(e.target.value)} //update message state on change
           type="text" 
           value={message} 
           placeholder="Send a message" 
@@ -67,18 +67,18 @@ export default function Details(){
           </button>
         </div>
         <div className="py-6">
-          <h2 className="font-bold">Comments</h2>
-          {allMessage?.map((message) => (
-            <div className="bg-white p-4 my-4 border-2" key={message.time}>
+          <h2 className="font-bold">Comments</h2> 
+          {allMessage?.map((message) => ( //map through all messages
+            <div className="bg-white p-4 my-4 border-2" key={message.time}> {/* message container */}
               <div className="flex items-center gap-2 mb-4">
                 <img 
                 className="w-10 rounded-full"
-                src={message.avatar} 
+                src={message.avatar} //user avatar
                 alt="" 
                 />
-                <h2>{message.userName}</h2>
+                <h2>{message.userName}</h2> {/* display user name */}
               </div>
-              <h2>{message.message}</h2>
+              <h2>{message.message}</h2> {/* display message content */}
             </div>
           ))}
         </div>

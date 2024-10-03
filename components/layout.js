@@ -4,9 +4,9 @@ import Nav from './Nav';
 export default function Layout({ children }) {
   return (
     <div className="mx-6 md:max-w-2x1 px-10 md:mx-auto font-nunito">
-      //render navigation component
+    {/* render navigation component */}
       <Nav />
-      // render main content
+    {/* render main content */}
       <main>{children}</main>
     </div>
   )

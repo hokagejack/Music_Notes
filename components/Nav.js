@@ -22,7 +22,7 @@ export default function Nav() {
             <button className="font-medium bg-green-600 active:bg-green-200 hover:bg-green-400 text-white py-2 px-2 rounded-mg textx-sm">Post Here</button> {/* button to post content */}
             </Link>
             <Link href="/dashboard" >
-            <img src={user.photoURL} className="w-12 rounded-full curser-pointer hover:opacity-90 active:opacity-60"/> {/* user's profile picture with hover effects */}
+            <img src={user.photoURL} className="w-12 rounded-full curser-pointer hover:opacity-90 active:opacity-60"/> {/* users prof picture*/}
             </Link>
           </div>
         )}

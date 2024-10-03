@@ -8,7 +8,7 @@ export default function Nav() {
 
   return (
     <nav className="flex justify-between items-center py-10">
-    {/* link to homepage */}
+    // link to homepage 
       <Link href="/"> 
         <button className="px-10 text-lg font-medium active:text-gray-500 hover:text-gray-400"> Music Notes: Home </button>
       </Link>
